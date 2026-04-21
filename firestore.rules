@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {userId}
+    // Fields: uid, email, displayName, photoURL, createdAt
+    //
+    // Collection: chats
+    // Document ID: {chatId}
+    // Fields: userId, title, updatedAt, createdAt
+    //
+    // Collection: chats/{chatId}/messages
+    // Document ID: {messageId}
+    // Fields: chatId, role, content, type, mediaUrl, timestamp
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        ('email' in request.auth.token) &&
+        (request.auth.token.email == "luvbee26@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isValidTimestamp(val) {
+      return val is timestamp || val == null;
+    }
+
+    // Domain Validators
+    function isValidChat(data) {
+      return data.keys().hasAll(['userId', 'title', 'updatedAt']) &&
+             data.userId == request.auth.uid &&
+             isValidString(data.title, 100) &&
+             isValidTimestamp(data.updatedAt) &&
+             (!data.keys().hasAll(['createdAt']) || isValidTimestamp(data.createdAt));
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['chatId', 'role', 'content', 'type', 'timestamp']) &&
+             data.role in ['user', 'model'] &&
+             data.type in ['text', 'image', 'video'] &&
+             isValidString(data.content, 50000) &&
+             isValidTimestamp(data.timestamp);
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && 
+        isValidString(request.resource.data.displayName, 100) &&
+        isValidString(request.resource.data.email, 100);
+      allow delete: if isAdmin();
+    }
+
+    // Chat Sessions
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidChat(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin()) && 
+                    isValidChat(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Messages
+      match /messages/{messageId} {
+        function canAccessChat() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+        }
+        allow read: if isAuthenticated() && (canAccessChat() || isAdmin());
+        allow create: if isAuthenticated() && canAccessChat() && isValidMessage(request.resource.data);
+        allow update: if isAuthenticated() && canAccessChat() && isValidMessage(request.resource.data);
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Collection Group for Messages (Global Search)
+    match /{path=**}/messages/{messageId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "FRUBID AGENT",
+  "description": "A versatile AI agent capable of research, coding, image generation, and video creation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

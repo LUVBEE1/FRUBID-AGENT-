@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+  }
+}
+
+@layer components {
+  .chat-bubble-user {
+    @apply bg-emerald-600 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[85%] shadow-md;
+  }
+  .chat-bubble-model {
+    @apply bg-zinc-800 text-zinc-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[85%] shadow-md border border-zinc-700;
+  }
+  .glass-panel {
+    @apply bg-zinc-900/50 backdrop-blur-xl border border-zinc-800;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zinc-700;
+}

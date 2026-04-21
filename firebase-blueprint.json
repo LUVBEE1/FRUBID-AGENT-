@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user-specific settings and profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "email": { "type": "string", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "The user's profile picture URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." }
+      },
+      "required": ["uid", "email"]
+    },
+    "ChatSession": {
+      "title": "Chat Session",
+      "description": "Represents a single conversation thread.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The session ID." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this chat." },
+        "title": { "type": "string", "description": "A summary or title for the chat." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last message time." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the chat started." }
+      },
+      "required": ["userId", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message in a chat session.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string", "description": "The ID of the parent chat session." },
+        "role": { "type": "string", "enum": ["user", "model"], "description": "Who sent the message." },
+        "content": { "type": "string", "description": "The text content of the message." },
+        "type": { "type": "string", "enum": ["text", "image", "video"], "description": "The type of content." },
+        "mediaUrl": { "type": "string", "description": "URL for generated images or videos." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["chatId", "role", "content", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatSession",
+      "description": "Chat session documents."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a chat session."
+    }
+  }
+}
